@@ -1,0 +1,36 @@
+name: Build, Push & Deploy Flask App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: self-hosted   # your local runner
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Login to Docker Hub
+      run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: |
+        docker build -t harshil403/flaskapp:latest .
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push harshil403/flaskapp:latest
+
+    - name: Deploy to Local Kubernetes (Minikube)
+      run: |
+        kubectl apply -f deployment.yml
+        kubectl apply -f service.yml
+
+    - name: Verify deployment
+      run: |
+        kubectl get pods
+        kubectl get svc
